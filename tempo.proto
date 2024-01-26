@@ -1,10 +1,11 @@
 syntax = "proto3";
 
-package tempopb;
+package opentelemetry;
 
-import "common/v1/common.proto";
-import "github.com/gogo/protobuf/gogoproto/gogo.proto";
-import "trace/v1/trace.proto";
+import "opentelemetry/proto/common/v1/common.proto";
+import "opentelemetry/proto/trace/v1/trace.proto";
+
+option go_package = "github.com/simonswine/tempopb";
 
 service Pusher {
   // different versions of PushBytes expect the trace data to be pushed in
@@ -58,7 +59,7 @@ message TraceByIDMetrics {}
 // SearchRequest takes no block parameters and implies a "recent traces" search
 message SearchRequest {
   // case insensitive partial match
-  map<string, string> Tags = 1 [(gogoproto.nullable) = false];
+  map<string, string> Tags = 1;
   uint32 MinDurationMs = 2;
   uint32 MaxDurationMs = 3;
   uint32 Limit = 4;
@@ -118,7 +119,7 @@ message TraceSearchMetadata {
 message SpanSet {
   repeated Span spans = 1;
   uint32 matched = 2;
-  repeated tempopb.common.v1.KeyValue attributes = 3;
+  repeated opentelemetry.proto.common.v1.KeyValue attributes = 3;
 }
 
 message Span {
@@ -126,7 +127,7 @@ message Span {
   string name = 2;
   uint64 startTimeUnixNano = 3;
   uint64 durationNanos = 4;
-  repeated tempopb.common.v1.KeyValue attributes = 5;
+  repeated opentelemetry.proto.common.v1.KeyValue attributes = 5;
 }
 
 message SearchMetrics {
@@ -174,7 +175,7 @@ message SearchTagValuesV2Response {
 }
 
 message Trace {
-  repeated tempopb.trace.v1.ResourceSpans batches = 1;
+  repeated opentelemetry.proto.trace.v1.ResourceSpans batches = 1;
 }
 
 // Write
@@ -194,25 +195,16 @@ enum PushErrorReason {
 //  current BatchDecoder in ./pkg/model
 message PushBytesRequest {
   // pre-marshalled Traces. length must match ids
-  repeated bytes traces = 2 [
-    (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "PreallocBytes"
-  ];
+  repeated bytes traces = 2;
   // trace ids. length must match traces
-  repeated bytes ids = 3 [
-    (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "PreallocBytes"
-  ];
+  repeated bytes ids = 3;
   // search data, length must match traces
-  repeated bytes searchData = 4 [
-    (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "PreallocBytes"
-  ];
+  repeated bytes searchData = 4;
 }
 
 message PushSpansRequest {
   // just send entire OTel spans for now
-  repeated tempopb.trace.v1.ResourceSpans batches = 1;
+  repeated opentelemetry.proto.trace.v1.ResourceSpans batches = 1;
 }
 
 message TraceBytes {
@@ -225,7 +217,7 @@ message TraceBytes {
 // can't encode a slice directly so we use this wrapper to generate the required
 // marshalling/unmarshalling functions.
 message LinkSlice {
-  repeated tempopb.trace.v1.Span.Link links = 1;
+  repeated opentelemetry.proto.trace.v1.Span.Link links = 1;
 }
 
 message SpanMetricsRequest {
@@ -333,13 +325,8 @@ message Sample {
 
 // https : // github.com/grafana/mimir/blob/main/pkg/mimirpb/mimir.proto#L53
 message TimeSeries {
-  // repeated LabelPair labels = 1 [(gogoproto.nullable) = false,
-  // (gogoproto.customtype) = "LabelAdapter"];
-  repeated tempopb.common.v1.KeyValue labels = 1 [(gogoproto.nullable) = false];
+  repeated opentelemetry.proto.common.v1.KeyValue labels = 1;
   // Sorted by time, oldest sample first.
-  repeated Sample samples = 2 [(gogoproto.nullable) = false];
-  // repeated Exemplar exemplars = 3 [ (gogoproto.nullable) = false ];
-  // repeated Histogram histograms = 4 [ (gogoproto.nullable) = false ];
-  // TODO: review the LabelAdapter and migrate the use of this string
+  repeated Sample samples = 2;
   string prom_labels = 3;
 }
